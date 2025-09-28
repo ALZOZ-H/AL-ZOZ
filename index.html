@@ -2,42 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AL ZOZ Store</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>AL ZOZ Store</title>
+
   <style>
     body {
-      <!-- Side Panel -->
-<div id="sidePanel">
-  <div style="text-align:center; margin-bottom:20px;">
-    <img src="logo.png" alt="AL ZOZ Logo" height="60" style="border-radius:8px; background:#fff; padding:5px;">
-  </div>
-
-  <!-- Visible to everyone -->
-  <a href="index.html">🛒 Products</a>
-  <a href="offers.html">🔥 Hot Offers</a>
-  <a href="contact.html">📞 Contact</a>
-
-  <!-- Admin-only -->
-  <a href="dashboard.html" class="admin-only" style="display:none;">📊 Dashboard</a>
-  <a href="admin.html" class="admin-only" style="display:none;">⚙️ Manage Products</a>
-
-  <!-- Logout -->
-  <a href="#" id="logoutBtn" class="logout">🚪 Logout</a>
-</div>
+      display: flex;
+      margin: 0;
+      font-family: Arial, sans-serif;
     }
-    /* Side panel */
-    #adminPanel {
+
+    /* Side Panel */
+    #sidePanel {
       width: 220px;
       background: linear-gradient(180deg, #4e54c8, #8f94fb);
       color: white;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       padding: 15px;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
     }
-    #adminPanel a {
+
+    #sidePanel img {
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background: #fff;
+      padding: 5px;
+    }
+
+    #sidePanel a {
       color: white;
       text-decoration: none;
       display: block;
@@ -46,58 +42,100 @@
       border-radius: 8px;
       transition: background 0.3s;
     }
-    #adminPanel a:hover {
+
+    #sidePanel a:hover {
       background: rgba(255, 255, 255, 0.2);
     }
-    #logoutBtn {
+
+    #sidePanel .logout {
       background: red;
       margin-top: auto;
       text-align: center;
+      font-weight: bold;
     }
+
     /* Main content */
     #mainContent {
-      flex: 1;
+      margin-left: 240px;
       padding: 20px;
+      flex: 1;
+    }
+
+    h1 {
+      color: #4e54c8;
+    }
+
+    .product {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px;
+      display: inline-block;
+      width: 200px;
+      text-align: center;
       background: #f9f9f9;
+      transition: transform 0.3s;
+    }
+
+    .product:hover {
+      transform: scale(1.05);
+    }
+
+    .product img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-
-  <!-- Admin Side Panel (hidden for normal users) -->
-  <div id="adminPanel" style="display:none;">
-    <div>
-      <h4>Admin Panel</h4>
-      <a href="index.html">🛒 Products</a>
-      <a href="offers.html">🔥 Hot Offers</a>
-      <a href="dashboard.html">📊 Dashboard</a>
-      <a href="contact.html">📞 Contact</a>
+  <!-- Side Panel -->
+  <div id="sidePanel">
+    <div style="text-align:center;">
+      <img src="logo.png" alt="AL ZOZ Logo" height="60">
     </div>
-    <a href="#" id="logoutBtn">🚪 Logout</a>
+
+    <!-- Visible to everyone -->
+    <a href="index.html">🛒 Products</a>
+    <a href="offers.html">🔥 Hot Offers</a>
+    <a href="contact.html">📞 Contact</a>
+
+    <!-- Admin-only -->
+    <a href="dashboard.html" class="admin-only" style="display:none;">📊 Dashboard</a>
+    <a href="admin.html" class="admin-only" style="display:none;">⚙️ Manage Products</a>
+
+    <!-- Logout -->
+    <a href="#" id="logoutBtn" class="logout">🚪 Logout</a>
   </div>
 
   <!-- Main Content -->
   <div id="mainContent">
-    <h1>Welcome to AL ZOZ</h1>
-    <p>Here are our products...</p>
-    <!-- Example products -->
-    <div class="row">
-      <div class="col-md-4">
-        <div class="card">
-          <img src="https://picsum.photos/seed/firstaid/300/200" class="card-img-top" alt="Product">
-          <div class="card-body">
-            <h5 class="card-title">First Aid Kit</h5>
-            <p class="card-text">$29.99</p>
-            <button class="btn btn-success">Buy Now</button>
-          </div>
-        </div>
-      </div>
+    <h1>Welcome to AL ZOZ Store</h1>
+    <p>We don’t sell products, we sell life savings.</p>
+
+    <!-- Example Products -->
+    <div class="product">
+      <img src="https://picsum.photos/200/150?random=1" alt="Product 1">
+      <h3>Product 1</h3>
+      <p>$19.99</p>
+    </div>
+
+    <div class="product">
+      <img src="https://picsum.photos/200/150?random=2" alt="Product 2">
+      <h3>Product 2</h3>
+      <p>$29.99</p>
+    </div>
+
+    <div class="product">
+      <img src="https://picsum.photos/200/150?random=3" alt="Product 3">
+      <h3>Product 3</h3>
+      <p>$39.99</p>
     </div>
   </div>
 
-  <!-- Firebase + JS -->
+  <!-- Firebase Script -->
   <script type="module">
-    // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -114,16 +152,20 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Show admin panel only for your email
+    // Check user login + show admin links only for your email
     onAuthStateChanged(auth, (user) => {
       if (user) {
         if (user.email === "alihomekh@gmail.com") {
-          document.getElementById("adminPanel").style.display = "flex";
+          document.querySelectorAll(".admin-only").forEach(el => {
+            el.style.display = "block";
+          });
         }
+      } else {
+        window.location.href = "login.html"; // force login if not signed in
       }
     });
 
-    // Logout button
+    // Logout
     document.getElementById("logoutBtn").addEventListener("click", () => {
       signOut(auth).then(() => {
         window.location.href = "login.html";
