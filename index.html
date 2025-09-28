@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AL ZOZ Store</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+    header { background: #222; color: #fff; padding: 20px; text-align: center; }
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 5px 0 0; font-style: italic; color: #ddd; }
+    button { background: #ff6600; padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; color: white; }
+    button:hover { background: #e65c00; }
+    .hidden { display: none; }
+
+    /* Store */
+    .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 20px; }
+    .product { background: white; border-radius: 8px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); padding: 15px; text-align: center; }
+    .product img { max-width: 100%; height: 150px; object-fit: cover; border-radius: 6px; }
+    .product h3 { margin: 10px 0 5px; }
+    .product p { font-size: 18px; font-weight: bold; margin: 0 0 10px; }
+
+    /* Admin */
+    #adminPanel { padding: 20px; }
+    #adminPanel input { margin: 5px; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+
+    /* Auth box */
+    #authBox { text-align: center; margin-top: 30px; }
+    #authBox input { display:block; margin: 10px auto; padding: 10px; width: 250px; border-radius: 6px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AL ZOZ</h1>
+    <p>Life Savings, Not Just Products</p>
+    <button id="logoutBtn" class="hidden">Logout</button>
+  </header>
+
+  <!-- Login/Register Section -->
+  <div id="authBox">
+    <h2>Login / Register</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <button id="registerBtn">Register</button>
+    <p>or</p>
+    <button id="googleBtn">Login with Google</button>
+  </div>
+
+  <!-- Store Section -->
+  <div id="store" class="hidden">
+    <h2 style="text-align:center; padding:15px;">Our Products</h2>
+    <div class="products" id="products"></div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel" class="hidden">
+    <h2>Admin Panel</h2>
+    <input type="text" id="prodName" placeholder="Product Name">
+    <input type="text" id="prodPrice" placeholder="Price">
+    <input type="text" id="prodImg" placeholder="Image URL">
+    <button id="addProductBtn">Add Product</button>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
+      authDomain: "al-zoz-store.firebaseapp.com",
+      projectId: "al-zoz-store",
+      storageBucket: "al-zoz-store.firebasestorage.app",
+      messagingSenderId: "977135794801",
+      appId: "1:977135794801:web:43aae20e57879b8e9579d0",
+      measurementId: "G-FG212CG4VE"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+    const googleBtn = document.getElementById("googleBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const storeDiv = document.getElementById("store");
+    const adminDiv = document.getElementById("adminPanel");
+    const productsDiv = document.getElementById("products");
+    const authBox = document.getElementById("authBox");
+
+    // Register
+    registerBtn.onclick = () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, pass)
+        .catch(err => alert(err.message));
+    };
+
+    // Login with Email
+    loginBtn.onclick = () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, pass)
+        .catch(err => alert(err.message));
+    };
+
+    // Login with Google
+    googleBtn.onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => alert(err.message));
+    };
+
+    // Logout
+    logoutBtn.onclick = () => {
+      auth.signOut();
+    };
+
+    // Watch login state
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        authBox.classList.add("hidden");
+        logoutBtn.classList.remove("hidden");
+
+        if (user.email === "alihomekh@gmail.com") {
+          adminDiv.classList.remove("hidden");
+          storeDiv.classList.add("hidden");
+        } else {
+          storeDiv.classList.remove("hidden");
+          adminDiv.classList.add("hidden");
+          loadProducts();
+        }
+      } else {
+        authBox.classList.remove("hidden");
+        logoutBtn.classList.add("hidden");
+        storeDiv.classList.add("hidden");
+        adminDiv.classList.add("hidden");
+      }
+    });
+
+    // Add product (admin only)
+    document.getElementById("addProductBtn").onclick = async () => {
+      const name = document.getElementById("prodName").value;
+      const price = document.getElementById("prodPrice").value;
+      const img = document.getElementById("prodImg").value;
+
+      if (name && price && img) {
+        await db.collection("products").add({ name, price, img });
+        alert("Product added!");
+      } else {
+        alert("Fill all fields!");
+      }
+    };
+
+    // Load products for customers
+    async function loadProducts() {
+      productsDiv.innerHTML = "";
+      const snapshot = await db.collection("products").get();
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const el = document.createElement("div");
+        el.classList.add("product");
+        el.innerHTML = `
+          <img src="${p.img}" alt="${p.name}">
+          <h3>${p.name}</h3>
+          <p>$${p.price}</p>
+          <button>Add to Cart</button>
+        `;
+        productsDiv.appendChild(el);
+      });
+    }
+  </script>
+</body>
+</html>
