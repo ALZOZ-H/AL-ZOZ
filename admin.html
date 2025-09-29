@@ -1,9 +1,7 @@
-<!-- admin.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>AL ZOZ — Manage Products</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -54,8 +52,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
-    getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc,
-    serverTimestamp
+    getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, getDoc
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -67,21 +64,19 @@
     appId: "1:977135794801:web:43aae20e57879b8e9579d0",
     measurementId: "G-FG212CG4VE"
   };
+  const adminEmail = "alihomekh@gmail.com";
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const adminEmail = "alihomekh@gmail.com";
 
-  // Protect page (admin only)
   onAuthStateChanged(auth, (user)=>{
-    if(!user) { window.location.href = 'login.html'; return; }
+    if(!user) { window.location.href='login.html'; return; }
     if(user.email.toLowerCase() !== adminEmail.toLowerCase()){ alert('Access denied'); window.location.href='index.html'; return; }
     loadProducts();
   });
 
   document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
 
-  // Add / Update product
   document.getElementById('productForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const id = document.getElementById('prodId').value;
@@ -94,30 +89,28 @@
     try{
       if(id){
         await updateDoc(doc(db,'products',id), { name, price, desc, images, offer });
-        alert('Product updated');
+        alert('Updated');
       } else {
         await addDoc(collection(db,'products'), { name, price, desc, images, offer, createdAt: serverTimestamp() });
-        alert('Product added');
+        alert('Added');
       }
-      e.target.reset(); document.getElementById('prodId').value='';
+      document.getElementById('productForm').reset(); document.getElementById('prodId').value='';
       loadProducts();
     }catch(err){ console.error(err); alert('Failed: '+err.message); }
   });
 
-  document.getElementById('clearBtn').addEventListener('click', ()=> {
-    document.getElementById('productForm').reset();
-    document.getElementById('prodId').value='';
-  });
+  document.getElementById('clearBtn').addEventListener('click', ()=> { document.getElementById('productForm').reset(); document.getElementById('prodId').value=''; });
 
   async function loadProducts(){
     const list = document.getElementById('productList'); list.innerHTML='';
     const snap = await getDocs(collection(db,'products'));
-    snap.forEach(docSnap=>{
-      const p = docSnap.data(); const id = docSnap.id;
-      const div = document.createElement('div'); div.style='display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #f0f0f0';
+    snap.forEach(s=>{
+      const p = s.data(); const id = s.id;
+      const div = document.createElement('div');
+      div.style = 'display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #f0f0f0';
       div.innerHTML = `<div style="display:flex;gap:10px;align-items:center">
-        <img src="${(p.images&&p.images[0])?p.images[0]:(p.image||'https://picsum.photos/seed/placeholder/200/150')}" style="width:64px;height:48px;object-fit:cover;border-radius:6px">
-        <div><strong>${p.name}</strong><div class="small-muted">$${p.price} ${p.offer?'<span style="background:#ff6a00;color:#fff;padding:4px 6px;border-radius:6px;margin-left:6px">HOT</span>':''}</div></div>
+        <img src="${(p.images && p.images[0])? p.images[0] : 'https://picsum.photos/seed/placeholder/200/150'}" style="width:64px;height:48px;object-fit:cover;border-radius:6px">
+        <div><strong>${p.name}</strong><div class="small-muted">$${p.price} ${p.offer?'<span style="background:#ff6a00;color:#fff;padding:4px 6px;border-radius:6px;margin-left:6px;">HOT</span>':''}</div></div>
       </div>
       <div>
         <button onclick="editProduct('${id}')" style="margin-right:8px">Edit</button>
@@ -128,12 +121,8 @@
   }
 
   window.editProduct = async (id) => {
-    const docRef = doc(db,'products',id);
-    const docSnap = await getDocs(collection(db,'products')); // workaround below
-    // simpler: query getDoc
-    const { getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-    const snap = await getDoc(docRef);
-    if(!snap.exists()){ alert('Not found'); return; }
+    const snap = await getDoc(doc(db,'products',id));
+    if(!snap.exists()) { alert('Not found'); return; }
     const p = snap.data();
     document.getElementById('prodId').value = id;
     document.getElementById('pname').value = p.name || '';
@@ -149,7 +138,6 @@
     await deleteDoc(doc(db,'products',id));
     loadProducts();
   };
-
 </script>
 </body>
 </html>
