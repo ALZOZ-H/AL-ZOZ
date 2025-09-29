@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>AL ZOZ — Dashboard</title>
+  <title>AL ZOZ — Hot Offers</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="sidebar">
@@ -12,34 +11,20 @@
     <a href="index.html">🛒 Products</a>
     <a href="offers.html">🔥 Hot Offers</a>
     <a href="contact.html">📞 Contact</a>
-    <a href="dashboard.html">📊 Dashboard</a>
-    <a href="admin.html">⚙️ Manage Products</a>
+    <a href="dashboard.html" class="admin-only">📊 Dashboard</a>
+    <a href="admin.html" class="admin-only">⚙️ Manage Products</a>
     <a href="#" id="logoutBtn" class="logout">🚪 Logout</a>
   </div>
 
   <div class="content">
-    <h1>Admin Dashboard</h1>
-    <div style="display:flex;gap:16px;margin-top:12px">
-      <div class="card" style="flex:1"><h3 id="visits">0</h3><div class="small-muted">Visits</div></div>
-      <div class="card" style="flex:1"><h3 id="orders">0</h3><div class="small-muted">Orders</div></div>
-      <div class="card" style="flex:1"><h3 id="returns">0</h3><div class="small-muted">Returns</div></div>
-    </div>
-
-    <div style="margin-top:18px" class="card">
-      <h3>Orders over time</h3>
-      <canvas id="ordersChart" style="max-width:900px"></canvas>
-    </div>
-
-    <div style="margin-top:18px" class="card">
-      <h3>Recent Orders</h3>
-      <div id="ordersList" style="margin-top:10px"></div>
-    </div>
+    <h1>Hot Offers</h1>
+    <div id="offersGrid" class="product-grid"></div>
   </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, collection, query, orderBy, getDocs, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
@@ -50,58 +35,28 @@
     appId: "1:977135794801:web:43aae20e57879b8e9579d0",
     measurementId: "G-FG212CG4VE"
   };
-  const adminEmail = "alihomekh@gmail.com";
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
-  onAuthStateChanged(auth, async (user)=>{
-    if(!user){ window.location.href='login.html'; return; }
-    if(user.email.toLowerCase() !== adminEmail.toLowerCase()){ alert('Access denied'); window.location.href='index.html'; return; }
-    document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
-    await loadStats(); await loadOrders();
+  onAuthStateChanged(auth, user=>{
+    document.getElementById('logoutBtn').style.display = user ? 'block' : 'none';
+    if(user && user.email && user.email.toLowerCase() === 'alihomekh@gmail.com') document.querySelectorAll('.admin-only').forEach(el=>el.style.display='block');
   });
+  document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
 
-  async function loadStats(){
-    const ref = doc(db,'stats','global'); const snap = await getDoc(ref);
-    const data = snap.exists() ? snap.data() : { visits:0, orders:0, returns:0 };
-    document.getElementById('visits').innerText = data.visits || 0;
-    document.getElementById('orders').innerText = data.orders || 0;
-    document.getElementById('returns').innerText = data.returns || 0;
-  }
-
-  async function loadOrders(){
-    const q = query(collection(db,'orders'), orderBy('createdAt','desc'));
+  (async function loadOffers(){
+    const q = query(collection(db,'products'), where('offer','==', true));
     const snap = await getDocs(q);
-    const orders = [];
-    snap.forEach(s => { const d = s.data(); d.id = s.id; orders.push(d); });
-
-    const list = document.getElementById('ordersList'); list.innerHTML='';
-    orders.slice(0,10).forEach(o=>{
-      const div = document.createElement('div'); div.style='padding:8px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center';
-      div.innerHTML = `<div><strong>${o.email || 'Guest'}</strong><div class="small-muted">${(o.items||[]).map(i=>i.name+" x"+i.qty).join(', ')}</div></div>
-      <div><div style="text-align:right">$${(o.total||0).toFixed(2)}</div>
-        <div style="margin-top:6px"><button onclick="markReturned('${o.id}')" style="background:#fff;border:1px solid #ddd;padding:6px;border-radius:6px;cursor:pointer">Mark Returned</button></div>
-      </div>`;
-      list.appendChild(div);
+    const grid = document.getElementById('offersGrid'); grid.innerHTML='';
+    if(snap.empty){ grid.innerHTML = '<div class="card">No hot offers right now.</div>'; return; }
+    snap.forEach(docSnap=>{
+      const p = docSnap.data(); const id = docSnap.id; const img = (p.images && p.images[0])? p.images[0] : (p.image || 'https://picsum.photos/seed/placeholder/800/600');
+      const el = document.createElement('div'); el.className='product-card';
+      el.innerHTML = `<a href="product.html?id=${id}" style="text-decoration:none;color:inherit"><img src="${img}" alt=""><div class="pbody"><div class="product-name">${p.name}</div><div class="product-price">$${p.price}</div><div class="badge-offer">HOT</div></div></a>`;
+      grid.appendChild(el);
     });
-
-    const counts = {}; orders.forEach(o=>{
-      const d = o.createdAt && o.createdAt.seconds ? new Date(o.createdAt.seconds*1000) : new Date();
-      const key = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
-      counts[key] = (counts[key]||0) + 1;
-    });
-    const labels = Object.keys(counts).slice(-14); const data = labels.map(l=>counts[l]||0);
-    const ctx = document.getElementById('ordersChart').getContext('2d');
-    new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Orders', data, borderColor:'#005bea', backgroundColor:'rgba(0,90,235,0.12)', fill:true }] } });
-  }
-
-  window.markReturned = async (orderId) => {
-    if(!confirm('Mark this order as returned?')) return;
-    await updateDoc(doc(db,'orders',orderId), { status:'returned' });
-    await updateDoc(doc(db,'stats','global'), { returns: increment(1) }).catch(async ()=> await setDoc(doc(db,'stats','global'), { visits:0, orders:0, returns:1 }));
-    await loadStats(); await loadOrders();
-  };
+  })();
 </script>
 </body>
 </html>
