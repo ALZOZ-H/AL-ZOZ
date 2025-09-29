@@ -1,9 +1,7 @@
-<!-- contact.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>AL ZOZ — Contact</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -53,7 +51,7 @@
 
   onAuthStateChanged(auth, user=>{
     document.getElementById('logoutBtn').style.display = user ? 'block' : 'none';
-    if(user && user.email === 'alihomekh@gmail.com') document.querySelectorAll('.admin-only').forEach(el=>el.style.display='block');
+    if(user && user.email && user.email.toLowerCase() === 'alihomekh@gmail.com') document.querySelectorAll('.admin-only').forEach(el=>el.style.display='block');
   });
   document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
 
