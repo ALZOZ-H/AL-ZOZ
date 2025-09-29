@@ -1,19 +1,10 @@
-<!-- login.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>AL ZOZ — Login</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    /* small override to center box */
-    .login-wrap { max-width:420px; margin:80px auto; }
-    .login-card { padding:20px; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(10,20,40,0.08); }
-    .btn { padding:10px 12px; border-radius:8px; border:none; cursor:pointer }
-    .btn-primary { background:#005bea; color:#fff; }
-    .btn-google { background:#fff; border:1px solid #e6e9ee; display:flex; gap:8px; align-items:center; justify-content:center; }
-  </style>
+  <style>.login-wrap{max-width:420px;margin:80px auto}.login-card{padding:20px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(10,20,40,.08);text-align:center}.btn{padding:10px 12px;border-radius:8px;border:none;cursor:pointer}.btn-primary{background:#005bea;color:#fff}.btn-google{background:#fff;border:1px solid #e6e9ee;display:flex;gap:8px;align-items:center;justify-content:center}</style>
 </head>
 <body>
   <div class="content">
@@ -62,26 +53,14 @@
   const emailEl = document.getElementById('email'), passEl = document.getElementById('password'), msg = document.getElementById('msg');
 
   document.getElementById('loginBtn').addEventListener('click', async ()=>{
-    try {
-      await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
-      window.location.href = 'index.html';
-    } catch (e) { msg.textContent = e.message; }
+    try{ await signInWithEmailAndPassword(auth, emailEl.value, passEl.value); window.location.href='index.html'; } catch(e){ msg.textContent = e.message; }
   });
-
   document.getElementById('signupBtn').addEventListener('click', async ()=>{
-    try {
-      await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
-      window.location.href = 'index.html';
-    } catch (e) { msg.textContent = e.message; }
+    try{ await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value); window.location.href='index.html'; } catch(e){ msg.textContent = e.message; }
   });
-
   document.getElementById('googleBtn').addEventListener('click', async ()=>{
-    try {
-      await signInWithPopup(auth, provider);
-      window.location.href = 'index.html';
-    } catch (e) { msg.textContent = e.message; }
+    try{ await signInWithPopup(auth, provider); window.location.href='index.html'; } catch(e){ msg.textContent = e.message; }
   });
-
 </script>
 </body>
 </html>
