@@ -1,26 +1,42 @@
 <!-- contact.html -->
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contact — AL ZOZ</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AL ZOZ — Contact</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
 <body>
-<nav class="navbar navbar-dark bg-dark"><div class="container"><a class="navbar-brand" href="index.html"><img src="logo.png" style="height:36px"></a></div></nav>
-<main class="container py-4">
-  <div class="card p-4 mx-auto" style="max-width:700px">
-    <h4>Contact Support</h4>
-    <p class="text-muted">Leave your message and the admin will respond.</p>
-    <input id="name" class="form-control mb-2" placeholder="Your name">
-    <input id="email" class="form-control mb-2" placeholder="Your email">
-    <textarea id="message" class="form-control mb-2" rows="6" placeholder="How can we help?"></textarea>
-    <div><button id="sendBtn" class="btn btn-primary">Send Message</button></div>
-    <div id="res" class="mt-2"></div>
+  <div class="sidebar">
+    <div class="logo"><img src="logo.png" alt="AL ZOZ"></div>
+    <a href="index.html">🛒 Products</a>
+    <a href="offers.html">🔥 Hot Offers</a>
+    <a href="contact.html">📞 Contact</a>
+    <a href="dashboard.html" class="admin-only">📊 Dashboard</a>
+    <a href="admin.html" class="admin-only">⚙️ Manage Products</a>
+    <a href="#" id="logoutBtn" class="logout">🚪 Logout</a>
   </div>
-</main>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script>
+  <div class="content">
+    <div class="card">
+      <h2>Contact Support</h2>
+      <p class="small-muted">Leave a message and the admin will see it in the dashboard.</p>
+      <input id="name" placeholder="Your Name">
+      <input id="email" placeholder="Your Email">
+      <textarea id="message" placeholder="Message" style="min-height:120px"></textarea>
+      <div style="display:flex;gap:8px">
+        <button id="sendBtn" style="background:#005bea;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer">Send</button>
+        <div id="res" style="margin-left:12px"></div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
     authDomain: "al-zoz-store.firebaseapp.com",
@@ -30,20 +46,28 @@
     appId: "1:977135794801:web:43aae20e57879b8e9579d0",
     measurementId: "G-FG212CG4VE"
   };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, user=>{
+    document.getElementById('logoutBtn').style.display = user ? 'block' : 'none';
+    if(user && user.email === 'alihomekh@gmail.com') document.querySelectorAll('.admin-only').forEach(el=>el.style.display='block');
+  });
+  document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
 
   document.getElementById('sendBtn').addEventListener('click', async ()=>{
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const message = document.getElementById('message').value.trim();
     const res = document.getElementById('res');
-    if(!email || !message){ res.innerHTML = '<div class="text-danger">Email and message required</div>'; return; }
+    if(!email || !message){ res.innerHTML = '<span style="color:#e63946">Email and message required</span>'; return; }
     try{
-      await db.collection('contacts').add({ name, email, message, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      res.innerHTML = '<div class="text-success">Message sent! The admin will reply soon.</div>';
+      await addDoc(collection(db,'contacts'), { name, email, message, createdAt: serverTimestamp() });
+      res.innerHTML = '<span style="color:#008a00">Message sent — admin will review.</span>';
       document.getElementById('name').value=''; document.getElementById('email').value=''; document.getElementById('message').value='';
-    }catch(e){ res.innerHTML = '<div class="text-danger">Failed to send. Try again later.</div>'; }
+    } catch(e){ res.innerHTML = '<span style="color:#e63946">Failed to send</span>'; }
   });
 </script>
 </body>
