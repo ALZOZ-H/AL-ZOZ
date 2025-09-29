@@ -89,6 +89,48 @@
     }
   </style>
 </head>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // 🔑 Your Firebase config (same as in admin.html)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
+    authDomain: "al-zoz-store.firebaseapp.com",
+    projectId: "al-zoz-store",
+    storageBucket: "al-zoz-store.firebasestorage.app",
+    messagingSenderId: "977135794801",
+    appId: "1:977135794801:web:43aae20e57879b8e9579d0",
+    measurementId: "G-FG212CG4VE"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Load products from Firestore
+  async function loadProducts() {
+    const productGrid = document.getElementById("productGrid");
+    productGrid.innerHTML = "";
+
+    const querySnapshot = await getDocs(collection(db, "products"));
+    querySnapshot.forEach((docSnap) => {
+      const product = docSnap.data();
+
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" style="width:100%; height:200px; object-fit:cover;">
+        <h3>${product.name}</h3>
+        <p>$${product.price}</p>
+        <button>Add to Cart</button>
+      `;
+      productGrid.appendChild(div);
+    });
+  }
+
+  loadProducts();
+</script>
 <body>
   <!-- Side Panel -->
   <div id="sidePanel">
