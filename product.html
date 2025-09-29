@@ -1,88 +1,91 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>AL ZOZ — Product</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - AL ZOZ</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="sidebar">
-    <div class="logo"><img src="logo.png" alt="AL ZOZ Logo"></div>
-    <a href="index.html">🛒 Products</a>
-    <a href="offers.html">🔥 Hot Offers</a>
-    <a href="contact.html">📞 Contact</a>
+    <h2>AL ZOZ</h2>
+    <a href="index.html">🏠 Home</a>
+    <a href="product.html">🛍 Products</a>
+    <a href="#">🔥 Hot Offers</a>
+    <a href="admin.html" class="admin-only">📦 Manage Products</a>
     <a href="dashboard.html" class="admin-only">📊 Dashboard</a>
-    <a href="admin.html" class="admin-only">⚙️ Manage Products</a>
-    <a href="#" id="logoutBtn" class="logout">🚪 Logout</a>
+    <a href="login.html" class="logout">🚪 Logout</a>
   </div>
 
   <div class="content">
-    <div id="productDetails" class="card"></div>
+    <h1 id="productName">Loading...</h1>
+    <div class="gallery">
+      <img id="mainImage" src="" alt="Main Product">
+      <div class="thumbnails" id="thumbnails"></div>
+    </div>
+    <p id="productPrice"></p>
+    <p id="productDesc"></p>
+    <button>Add to Cart</button>
   </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
-    authDomain: "al-zoz-store.firebaseapp.com",
-    projectId: "al-zoz-store",
-    storageBucket: "al-zoz-store.firebasestorage.app",
-    messagingSenderId: "977135794801",
-    appId: "1:977135794801:web:43aae20e57879b8e9579d0",
-    measurementId: "G-FG212CG4VE"
-  };
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
+      authDomain: "al-zoz-store.firebaseapp.com",
+      projectId: "al-zoz-store",
+      storageBucket: "al-zoz-store.firebasestorage.app",
+      messagingSenderId: "977135794801",
+      appId: "1:977135794801:web:43aae20e57879b8e9579d0",
+      measurementId: "G-FG212CG4VE"
+    };
 
-  const adminEmail = "alihomekh@gmail.com";
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  onAuthStateChanged(auth, user=>{
-    if(user && user.email && user.email.toLowerCase() === adminEmail.toLowerCase()) document.querySelectorAll('.admin-only').forEach(el=>el.style.display='block');
-    document.getElementById('logoutBtn').style.display = user ? 'block' : 'none';
-  });
-  document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
+    // Get product ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("id");
 
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
+    async function loadProduct() {
+      if (!productId) {
+        document.getElementById("productName").innerText = "Product not found.";
+        return;
+      }
 
-  (async function(){
-    if(!id){ document.getElementById('productDetails').innerHTML = '<p>Missing product id</p>'; return; }
-    const docRef = doc(db,'products',id);
-    const snap = await getDoc(docRef);
-    if(!snap.exists()){ document.getElementById('productDetails').innerHTML = '<p>Product not found</p>'; return; }
-    const p = snap.data();
-    const imgs = (p.images && p.images.length>0) ? p.images : ((p.image) ? [p.image] : ['https://picsum.photos/seed/placeholder/800/600']);
-    const main = imgs[0];
-    document.getElementById('productDetails').innerHTML = `
-      <div class="product-detail">
-        <div class="gallery">
-          <img id="mainImg" class="main-img" src="${main}">
-          <div class="thumbs">${imgs.map(i=>`<img src="${i}" onclick="document.getElementById('mainImg').src='${i}'">`).join('')}</div>
-        </div>
-        <div class="details">
-          <h2>${p.name}</h2>
-          <p>${p.desc || ''}</p>
-          <h3 style="color:#0077cc">$${p.price}</h3>
-          <div style="display:flex;gap:8px;margin-top:12px">
-            <button id="addBtn" style="background:#00c6fb;border:none;padding:10px;border-radius:8px;cursor:pointer;color:#fff">Add to Cart</button>
-            <a href="index.html" class="back">← Back to products</a>
-          </div>
-        </div>
-      </div>
-    `;
-    document.getElementById('addBtn').addEventListener('click', ()=>{
-      const CART_KEY = 'alzoz_cart_v1';
-      const cart = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
-      if(!cart[id]) cart[id] = { id: id, name: p.name, price: p.price, img: imgs[0], qty:0 };
-      cart[id].qty++;
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-      alert('Added to cart');
-    });
-  })();
-</script>
+      const productRef = doc(db, "products", productId);
+      const productSnap = await getDoc(productRef);
+
+      if (productSnap.exists()) {
+        const product = productSnap.data();
+
+        document.getElementById("productName").innerText = product.name;
+        document.getElementById("productPrice").innerText = `$${product.price}`;
+        document.getElementById("productDesc").innerText = product.description || "No description available.";
+        document.getElementById("mainImage").src = product.images[0];
+
+        const thumbnailsDiv = document.getElementById("thumbnails");
+        product.images.forEach((img, index) => {
+          const thumb = document.createElement("img");
+          thumb.src = img;
+          thumb.alt = "Thumbnail " + (index + 1);
+          thumb.style.width = "100px";
+          thumb.style.cursor = "pointer";
+          thumb.addEventListener("click", () => {
+            document.getElementById("mainImage").src = img;
+          });
+          thumbnailsDiv.appendChild(thumb);
+        });
+      } else {
+        document.getElementById("productName").innerText = "Product not found.";
+      }
+    }
+
+    loadProduct();
+  </script>
 </body>
 </html>
