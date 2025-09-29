@@ -1,154 +1,87 @@
-<!DOCTYPE html>
+<!-- login.html -->
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AL ZOZ Login</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #8f94fb, #4e54c8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .login-box {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 350px;
-    }
-
-    .login-box h2 {
-      margin-bottom: 20px;
-      color: #4e54c8;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #4e54c8;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: #3a3fbf;
-    }
-
-    .google-btn {
-      background: white;
-      color: black;
-      border: 1px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .google-btn img {
-      height: 20px;
-      margin-right: 10px;
-    }
-
-    p {
-      margin-top: 15px;
-    }
-
-    a {
-      color: #4e54c8;
-      text-decoration: none;
-      font-weight: bold;
-    }
-  </style><head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Page Title</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AL ZOZ — Login</title>
   <link rel="stylesheet" href="styles.css">
-</head>
+  <style>
+    /* small override to center box */
+    .login-wrap { max-width:420px; margin:80px auto; }
+    .login-card { padding:20px; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(10,20,40,0.08); }
+    .btn { padding:10px 12px; border-radius:8px; border:none; cursor:pointer }
+    .btn-primary { background:#005bea; color:#fff; }
+    .btn-google { background:#fff; border:1px solid #e6e9ee; display:flex; gap:8px; align-items:center; justify-content:center; }
+  </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>Welcome to AL ZOZ</h2>
-    <p>We don’t sell products, we sell life savings.</p>
+  <div class="content">
+    <div class="login-wrap">
+      <div class="login-card">
+        <div style="text-align:center;margin-bottom:12px;">
+          <img src="logo.png" height="64" alt="AL ZOZ">
+          <h2 style="color:#002a8f;margin-top:8px;">Welcome to AL ZOZ</h2>
+          <p class="small-muted">Sign in to manage or shop</p>
+        </div>
 
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <button id="signupBtn">Sign Up</button>
+        <input id="email" placeholder="Email" style="width:100%;padding:10px;border-radius:8px;border:1px solid #eee;margin-bottom:8px">
+        <input id="password" placeholder="Password" type="password" style="width:100%;padding:10px;border-radius:8px;border:1px solid #eee;margin-bottom:12px">
 
-    <button class="google-btn" id="googleLogin">
-      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo">
-      Login with Google
-    </button>
+        <div style="display:flex;gap:8px">
+          <button id="loginBtn" class="btn btn-primary" style="flex:1">Login</button>
+          <button id="signupBtn" class="btn" style="background:#e6e7f9;color:#002a8f">Sign Up</button>
+        </div>
+
+        <div style="text-align:center;margin:12px 0;color:#6b7280">or</div>
+
+        <button id="googleBtn" class="btn btn-google" style="width:100%"><img src="https://developers.google.com/identity/images/g-logo.png" height="18"> Sign in with Google</button>
+
+        <div id="msg" style="margin-top:10px;color:#cf2333"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- Firebase Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
-      authDomain: "al-zoz-store.firebaseapp.com",
-      projectId: "al-zoz-store",
-      storageBucket: "al-zoz-store.firebasestorage.app",
-      messagingSenderId: "977135794801",
-      appId: "1:977135794801:web:43aae20e57879b8e9579d0",
-      measurementId: "G-FG212CG4VE"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyBMcvOHM65rOqpZbwqSGI7LJm6lNc0dPo4",
+    authDomain: "al-zoz-store.firebaseapp.com",
+    projectId: "al-zoz-store",
+    storageBucket: "al-zoz-store.firebasestorage.app",
+    messagingSenderId: "977135794801",
+    appId: "1:977135794801:web:43aae20e57879b8e9579d0",
+    measurementId: "G-FG212CG4VE"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+  const emailEl = document.getElementById('email'), passEl = document.getElementById('password'), msg = document.getElementById('msg');
 
-    // Email Login
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          window.location.href = "index.html";
-        })
-        .catch(err => alert(err.message));
-    });
+  document.getElementById('loginBtn').addEventListener('click', async ()=>{
+    try {
+      await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
+      window.location.href = 'index.html';
+    } catch (e) { msg.textContent = e.message; }
+  });
 
-    // Email Sign Up
-    document.getElementById("signupBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          window.location.href = "index.html";
-        })
-        .catch(err => alert(err.message));
-    });
+  document.getElementById('signupBtn').addEventListener('click', async ()=>{
+    try {
+      await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
+      window.location.href = 'index.html';
+    } catch (e) { msg.textContent = e.message; }
+  });
 
-    // Google Login
-    document.getElementById("googleLogin").addEventListener("click", () => {
-      signInWithPopup(auth, provider)
-        .then(() => {
-          window.location.href = "index.html";
-        })
-        .catch(err => alert(err.message));
-    });
-  </script>
+  document.getElementById('googleBtn').addEventListener('click', async ()=>{
+    try {
+      await signInWithPopup(auth, provider);
+      window.location.href = 'index.html';
+    } catch (e) { msg.textContent = e.message; }
+  });
+
+</script>
 </body>
 </html>
