@@ -1,9 +1,7 @@
-<!-- dashboard.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>AL ZOZ — Dashboard</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,7 +19,6 @@
 
   <div class="content">
     <h1>Admin Dashboard</h1>
-
     <div style="display:flex;gap:16px;margin-top:12px">
       <div class="card" style="flex:1"><h3 id="visits">0</h3><div class="small-muted">Visits</div></div>
       <div class="card" style="flex:1"><h3 id="orders">0</h3><div class="small-muted">Orders</div></div>
@@ -53,22 +50,20 @@
     appId: "1:977135794801:web:43aae20e57879b8e9579d0",
     measurementId: "G-FG212CG4VE"
   };
+  const adminEmail = "alihomekh@gmail.com";
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const adminEmail = "alihomekh@gmail.com";
 
   onAuthStateChanged(auth, async (user)=>{
     if(!user){ window.location.href='login.html'; return; }
     if(user.email.toLowerCase() !== adminEmail.toLowerCase()){ alert('Access denied'); window.location.href='index.html'; return; }
     document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
-    await loadStats();
-    await loadOrders();
+    await loadStats(); await loadOrders();
   });
 
   async function loadStats(){
-    const ref = doc(db,'stats','global');
-    const snap = await getDoc(ref);
+    const ref = doc(db,'stats','global'); const snap = await getDoc(ref);
     const data = snap.exists() ? snap.data() : { visits:0, orders:0, returns:0 };
     document.getElementById('visits').innerText = data.visits || 0;
     document.getElementById('orders').innerText = data.orders || 0;
@@ -80,7 +75,7 @@
     const snap = await getDocs(q);
     const orders = [];
     snap.forEach(s => { const d = s.data(); d.id = s.id; orders.push(d); });
-    // populate recent
+
     const list = document.getElementById('ordersList'); list.innerHTML='';
     orders.slice(0,10).forEach(o=>{
       const div = document.createElement('div'); div.style='padding:8px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center';
@@ -91,26 +86,21 @@
       list.appendChild(div);
     });
 
-    // build chart data (orders per day)
-    const counts = {};
-    orders.forEach(o=>{
+    const counts = {}; orders.forEach(o=>{
       const d = o.createdAt && o.createdAt.seconds ? new Date(o.createdAt.seconds*1000) : new Date();
       const key = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
       counts[key] = (counts[key]||0) + 1;
     });
-    const labels = Object.keys(counts).slice(-14); // last up to 14 days
-    const data = labels.map(l => counts[l] || 0);
+    const labels = Object.keys(counts).slice(-14); const data = labels.map(l=>counts[l]||0);
     const ctx = document.getElementById('ordersChart').getContext('2d');
-    new Chart(ctx,{ type:'line', data:{ labels, datasets:[{ label:'Orders', data, borderColor:'#005bea', backgroundColor:'rgba(0,90,235,0.12)', fill:true }] }, options:{} });
+    new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Orders', data, borderColor:'#005bea', backgroundColor:'rgba(0,90,235,0.12)', fill:true }] } });
   }
 
   window.markReturned = async (orderId) => {
     if(!confirm('Mark this order as returned?')) return;
     await updateDoc(doc(db,'orders',orderId), { status:'returned' });
-    // increment returns in stats
     await updateDoc(doc(db,'stats','global'), { returns: increment(1) }).catch(async ()=> await setDoc(doc(db,'stats','global'), { visits:0, orders:0, returns:1 }));
-    await loadStats();
-    await loadOrders();
+    await loadStats(); await loadOrders();
   };
 </script>
 </body>
