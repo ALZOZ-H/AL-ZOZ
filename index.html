@@ -1,24 +1,19 @@
-<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>AL ZOZ — Store</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Sidebar (visible to everyone) -->
   <div class="sidebar">
     <div class="logo"><img src="logo.png" alt="AL ZOZ Logo"></div>
     <a href="index.html">🛒 Products</a>
     <a href="offers.html">🔥 Hot Offers</a>
     <a href="contact.html">📞 Contact</a>
-
-    <!-- Admin-only buttons (JS will show for admin) -->
     <a href="dashboard.html" class="admin-only">📊 Dashboard</a>
     <a href="admin.html" class="admin-only">⚙️ Manage Products</a>
-
     <a href="#" id="logoutBtn" class="logout">🚪 Logout</a>
   </div>
 
@@ -36,10 +31,11 @@
 
   <div id="cartFab" class="cart-fab">Cart (<span id="cartCount">0</span>)</div>
 
-  <!-- Cart modal (simple) -->
-  <div id="cartModal" style="display:none;position:fixed;right:20px;bottom:80px;width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.2);padding:12px;z-index:999;">
+  <!-- cart modal -->
+  <div id="cartModal" style="display:none;position:fixed;right:20px;bottom:80px;width:360px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px;z-index:999">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong>Cart</strong><button id="closeCart" style="background:#eee;border:none;padding:6px;border-radius:6px;cursor:pointer">Close</button>
+      <strong>Cart</strong>
+      <button id="closeCart" style="background:#eee;border:none;padding:6px;border-radius:6px;cursor:pointer">Close</button>
     </div>
     <div id="cartItems" style="max-height:260px;overflow:auto"></div>
     <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
@@ -49,12 +45,11 @@
   </div>
 
 <script type="module">
-  // Firebase + Firestore + Auth (modular)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
-    getFirestore, collection, getDocs, doc, setDoc, updateDoc,
-    addDoc, serverTimestamp, increment, query, orderBy
+    getFirestore, collection, getDocs, query, orderBy, doc, serverTimestamp,
+    addDoc, updateDoc, setDoc, increment
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -66,162 +61,113 @@
     appId: "1:977135794801:web:43aae20e57879b8e9579d0",
     measurementId: "G-FG212CG4VE"
   };
-
   const adminEmail = "alihomekh@gmail.com";
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // show/hide admin links based on auth
+  // Auth state: show admin links and record visit
   onAuthStateChanged(auth, async (user) => {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    document.getElementById('logoutBtn').style.display = user ? 'block' : 'none';
     if (user && user.email && user.email.toLowerCase() === adminEmail.toLowerCase()) {
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
     }
-    // show/hide logout button only when logged in
-    document.getElementById('logoutBtn').style.display = user ? 'block' : 'none';
-
-    // record visit (do regardless of auth)
+    // record visit and analytics
     try {
       const statsRef = doc(db, 'stats', 'global');
-      await updateDoc(statsRef, { visits: increment(1) }).catch(async (err) => {
-        // if not exist -> create
-        await setDoc(statsRef, { visits: 1, orders: 0, returns: 0 });
-      });
-      // store a visit doc for analytics
-      await addDoc(collection(db, 'analytics'), { type:'visit', email: user?.email || null, ts: serverTimestamp() });
-    } catch (e) {
-      console.warn('visit record error', e);
-    }
+      await updateDoc(statsRef, { visits: increment(1) }).catch(async ()=> await setDoc(statsRef, { visits:1, orders:0, returns:0 }));
+      await addDoc(collection(db,'analytics'), { type:'visit', email: user?.email || null, ts: serverTimestamp() });
+    } catch(e){ console.warn('visit record error', e); }
   });
 
-  // logout
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    signOut(auth).then(()=> location.href='login.html');
-  });
+  document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=> location.href='login.html'));
 
-  // load products
+  // load products from Firestore
   async function loadProducts(){
-    const grid = document.getElementById('productGrid');
-    grid.innerHTML = '';
-    try {
+    const grid = document.getElementById('productGrid'); grid.innerHTML = '';
+    try{
       const q = query(collection(db,'products'), orderBy('createdAt','desc'));
       const snap = await getDocs(q);
-      if (snap.empty) {
-        grid.innerHTML = '<div class="card"><div style="padding:20px">No products yet. Admin can add products in Manage Products.</div></div>';
-        return;
-      }
-      snap.forEach(docSnap=>{
-        const p = docSnap.data();
-        const id = docSnap.id;
+      if (snap.empty) { grid.innerHTML = '<div class="card">No products yet.</div>'; return; }
+      snap.forEach(s => {
+        const p = s.data(); const id = s.id;
         const img = (p.images && p.images.length>0) ? p.images[0] : (p.image || 'https://picsum.photos/seed/placeholder/800/600');
-        const el = document.createElement('div');
-        el.className = 'product-card';
-        el.innerHTML = `
+        const col = document.createElement('div');
+        col.className = 'product-card';
+        col.innerHTML = `
           <a href="product.html?id=${id}" style="text-decoration:none;color:inherit;display:block">
             <img src="${img}" alt="${p.name}">
             <div class="pbody">
-              ${p.offer ? '<span class="badge-offer">HOT</span>' : ''}
+              ${p.offer?'<div class="badge-offer">HOT</div>':''}
               <div class="product-name">${p.name}</div>
               <div class="product-price">$${p.price}</div>
             </div>
           </a>
         `;
-        grid.appendChild(el);
+        grid.appendChild(col);
       });
-    } catch (e) {
-      console.error('loadProducts', e);
-      grid.innerHTML = '<div class="card"><div style="padding:20px;color:#cf2333">Failed to load products.</div></div>';
+    }catch(e){
+      console.error(e);
+      grid.innerHTML = '<div class="card">Failed to load products.</div>';
     }
   }
-
   await loadProducts();
 
-  // CART (simple localStorage cart)
+  // Cart (local)
   const CART_KEY = 'alzoz_cart_v1';
-  function getCart(){ return JSON.parse(localStorage.getItem(CART_KEY) || '{}'); }
-  function saveCart(cart){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); updateCartUI(); }
-  function addToCart(item){ const cart = getCart(); const key = item.id;
-    if(!cart[key]) cart[key] = {...item, qty:0};
-    cart[key].qty++; saveCart(cart); alert('Added to cart'); }
-
-  function updateCartUI(){
-    const cart = getCart();
-    const count = Object.values(cart).reduce((s,i)=>s+i.qty,0);
-    document.getElementById('cartCount').innerText = count;
-  }
+  function getCart(){ return JSON.parse(localStorage.getItem(CART_KEY)||'{}'); }
+  function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartUI(); }
+  function updateCartUI(){ const cnt = Object.values(getCart()).reduce((s,i)=>s+i.qty,0); document.getElementById('cartCount').innerText = cnt; }
   updateCartUI();
-
-  // expose addToCart to global for product page to call via window
-  window.addToCart = (id,name,price,img) => addToCart({id,name,price,img});
-
-  // Cart UI behavior
-  const cartFab = document.getElementById('cartFab');
-  const cartModal = document.getElementById('cartModal');
-  cartFab.addEventListener('click', ()=> {
-    renderCart();
-    cartModal.style.display = 'block';
-  });
-  document.getElementById('closeCart').addEventListener('click', ()=> { cartModal.style.display = 'none'; });
-
-  function renderCart(){
-    const container = document.getElementById('cartItems');
-    container.innerHTML = '';
+  window.addToCart = (id,name,price,img) => {
     const cart = getCart();
-    if(Object.keys(cart).length===0){ container.innerHTML = '<div class="small-muted">Cart is empty</div>'; document.getElementById('cartTotal').innerText = '0.00'; return; }
+    if(!cart[id]) cart[id] = { id,name,price,img,qty:0 };
+    cart[id].qty++;
+    saveCart(cart);
+    alert('Added to cart');
+  };
+
+  // cart modal
+  const cartFab = document.getElementById('cartFab'); const cartModal = document.getElementById('cartModal');
+  cartFab.addEventListener('click', ()=> { renderCart(); cartModal.style.display='block'; });
+  document.getElementById('closeCart').addEventListener('click', ()=> cartModal.style.display='none');
+  function renderCart(){
+    const container = document.getElementById('cartItems'); container.innerHTML=''; const cart = getCart();
+    if(Object.keys(cart).length===0){ container.innerHTML='<div class="small-muted">Cart is empty</div>'; document.getElementById('cartTotal').innerText='0.00'; return; }
     let total=0;
     Object.values(cart).forEach(item=>{
-      total += item.price * item.qty;
+      total += item.price*item.qty;
       const row = document.createElement('div');
-      row.style = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px';
-      row.innerHTML = `<div>
-        <div style="font-weight:700">${item.name}</div>
-        <div class="small-muted">$${item.price} x ${item.qty}</div>
-      </div>
-      <div>
-        <button style="margin-right:6px" onclick="chgQty('${item.id}',-1)">-</button>
-        <button onclick="chgQty('${item.id}',1)">+</button>
-      </div>`;
+      row.style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px';
+      row.innerHTML = `<div><div style="font-weight:700">${item.name}</div><div class="small-muted">$${item.price} x ${item.qty}</div></div>
+        <div><button onclick="chgQty('${item.id}',-1)" style="margin-right:6px">-</button><button onclick="chgQty('${item.id}',1)">+</button></div>`;
       container.appendChild(row);
     });
     document.getElementById('cartTotal').innerText = total.toFixed(2);
   }
-
   window.chgQty = (id,delta) => {
-    const cart = getCart();
-    if(!cart[id]) return;
-    cart[id].qty += delta;
-    if(cart[id].qty <= 0) delete cart[id];
-    saveCart(cart);
-    renderCart();
+    const cart = getCart(); if(!cart[id]) return; cart[id].qty += delta; if(cart[id].qty<=0) delete cart[id]; saveCart(cart); renderCart();
   };
 
+  // checkout -> create order doc and analytics
   document.getElementById('checkoutBtn').addEventListener('click', async ()=>{
-    const cart = getCart();
-    if(Object.keys(cart).length===0){ alert('Your cart is empty'); return; }
-    // build order
+    const cart = getCart(); if(Object.keys(cart).length===0){ alert('Cart empty'); return; }
     const items = Object.values(cart).map(i=>({ id:i.id, name:i.name, price:i.price, qty:i.qty }));
     const total = items.reduce((s,i)=>s + i.price*i.qty, 0);
-    let currentUser = auth.currentUser;
+    const user = auth.currentUser;
     try {
-      await addDoc(collection(db,'orders'), { items, total, email: currentUser?.email || null, status:'pending', createdAt: serverTimestamp() });
-      // increment orders count in stats doc
+      await addDoc(collection(db,'orders'), { items, total, email: user?.email || null, status:'pending', createdAt: serverTimestamp() });
       const statsRef = doc(db,'stats','global');
-      await updateDoc(statsRef, { orders: increment(1) }).catch(async ()=> setDoc(statsRef, { visits:0, orders:1, returns:0 }));
-      // add analytics
-      await addDoc(collection(db,'analytics'), { type:'order', email: currentUser?.email || null, amount: total, ts: serverTimestamp() });
-      // clear cart
-      localStorage.removeItem(CART_KEY);
-      updateCartUI();
-      renderCart();
-      alert('Order placed! Thank you.');
-      cartModal.style.display = 'none';
-    } catch (e) {
-      console.error('checkout error', e);
-      alert('Failed to place order.');
-    }
+      await updateDoc(statsRef, { orders: increment(1) }).catch(async ()=> await setDoc(statsRef, { visits:0, orders:1, returns:0 }));
+      await addDoc(collection(db,'analytics'), { type:'order', email: user?.email || null, amount: total, ts: serverTimestamp() });
+      localStorage.removeItem(CART_KEY); updateCartUI(); renderCart(); cartModal.style.display='none';
+      alert('Order placed — thank you!');
+      await loadProducts(); // refresh maybe
+    } catch(e){ console.error(e); alert('Failed to place order'); }
   });
 
 </script>
 </body>
 </html>
+
